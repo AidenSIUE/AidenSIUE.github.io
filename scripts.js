@@ -9,6 +9,7 @@ var paddleSpeed = 5;
 var ballSpeed = 6;
 var currentVolley = 0;
 var userAction = false;
+var audio = new Audio('pong.mp3');
 
 // variables to be used for random serve angle
 let rangemax = 3.8;
@@ -100,7 +101,6 @@ function generateRandomColors() {
 
 function playSound(){
   if(userAction){
-    var audio = new Audio('pong.mp3');
     audio.play();
   }
 }
