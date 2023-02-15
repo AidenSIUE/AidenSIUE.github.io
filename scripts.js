@@ -3,16 +3,21 @@ const context = canvas.getContext('2d');
 const grid = 15;
 const paddleHeight = grid * 5; // 80
 const maxPaddleY = canvas.height - grid - paddleHeight;
+const animationDuration = 4;
 
 var paddleSpeed = 5;
 var ballSpeed = 6;
 var currentVolley = 0;
+var userAction = false;
 
 // variables to be used for random serve angle
 let rangemax = 3.8;
 let rangemin = 0.2;
 let randangle = 2;
 let randserveside = 1;
+let curAnimateFrame = animationDuration;
+let animateX = 0;
+let animateY = 0;
 
 const leftPaddle = {
   // start in the middle of the game on the left side
@@ -69,21 +74,37 @@ function move(){
   }
 }
  function endGame(){
-  	context.fillStyle = 'red';
-  	context.fillRect(175,200,400,200);
+    context.fillStyle = 'red';
+    context.fillRect(175,200,400,200);
     context.fillStyle = 'Black';
-  	context.font = '25px arial';
-  	context.fillText("Game over", 305, 260);
+    context.font = '25px arial';
+    context.fillText("Game over", 305, 260);
     playAgain();
 }
 function playAgain(){
    context.fillText("Press Enter to play again",240,350);
    document.addEventListener('keydown', function(e) {
-  	if (e.which === 13) {
-    		location.reload();
-    	}
-	});
+    if (e.which === 13) {
+        location.reload();
+      }
+  });
 }
+
+function generateRandomColors() {
+  let r = Math.floor(Math.random() * 256);
+  let g = Math.floor(Math.random() * 256);
+  let b = Math.floor(Math.random() * 256);
+  return `rgb(${r},${g},${b})`;
+}
+
+
+function playSound(){
+  if(userAction){
+    var audio = new Audio('pong.mp3');
+    audio.play();
+  }
+}
+
 // game loop
 function loop() {
   requestAnimationFrame(loop);
@@ -128,10 +149,18 @@ function loop() {
   if (ball.y < grid) {
     ball.y = grid;
     ball.dy *= -1;
+    animateX = ball.x;
+    animateY = ball.y;
+    curAnimateFrame = 0;
+    playSound();
   }
   else if (ball.y + grid > canvas.height - grid) {
     ball.y = canvas.height - grid * 2;
     ball.dy *= -1;
+    animateX = ball.x;
+    animateY = ball.y;
+    curAnimateFrame = 0;
+    playSound();
   }
 
   // reset ball if it goes past paddle (but only if we haven't already done so)
@@ -142,9 +171,8 @@ function loop() {
     else if(ball.x > canvas.width && currentVolley > 0)
       document.getElementById('score1').innerHTML = parseInt(document.getElementById('score1').innerHTML) + 1;
 
-    
     let longestVolley = parseInt(document.getElementById('longestVolley').innerHTML);
-      
+     
     if (currentVolley > longestVolley) {
       document.getElementById('longestVolley').innerHTML = currentVolley;
     }
@@ -158,6 +186,7 @@ function loop() {
       ball.x = canvas.width / 2;
       ball.y = canvas.height / randangle; // the height at which the ball starts from is randomized
 
+
       // randomly change which side the ball is served toward
       randserveside = Math.floor(Math.random() * 2); // generates either 0 or 1
       if (randserveside == 0) {
@@ -168,25 +197,48 @@ function loop() {
       }  
 
     }, 900);
-    
+
     currentVolley = 0;
+  }
+
+  if(curAnimateFrame < animationDuration){
+
+    context.fillStyle = generateRandomColors();
+
+    for (let i = 0; i < 8; i++) {
+      let rectAngle = (i / 8) * (2 * Math.PI);
+      let rectX = animateX + 20 * Math.cos(rectAngle);
+      let rectY = animateY + 20 * Math.sin(rectAngle);
+      context.fillRect(rectX - 20 / 2, rectY - 20 / 2, 20, 20);
+    }
+    curAnimateFrame++;
   }
 
   // check to see if ball collides with paddle. if they do change x velocity
   if (collides(ball, leftPaddle)) {
+    animateX = ball.x;
+    animateY = ball.y;
+    curAnimateFrame = 0;
+    playSound();
+
     ball.dx *= -1;
-    
-    currentVolley +=1; 
-    
+   
+    currentVolley +=1;
+   
     // move ball next to the paddle otherwise the collision will happen again
     // in the next frame
     ball.x = leftPaddle.x + leftPaddle.width;
   }
   else if (collides(ball, rightPaddle)) {
+    animateX = ball.x;
+    animateY = ball.y;
+    curAnimateFrame = 0;
+    playSound();
+
     ball.dx *= -1;
-    
+   
     currentVolley +=1;
-    
+   
     // move ball next to the paddle otherwise the collision will happen again
     // in the next frame
     ball.x = rightPaddle.x - ball.width;
@@ -210,21 +262,24 @@ function loop() {
 document.addEventListener('keydown', function(e) {
   // up arrow key
   if (e.which === 38) {
+    userAction = true;
     rightPaddle.dy = -paddleSpeed;
   }
   // down arrow key
   else if (e.which === 40) {
+    userAction = true;
     rightPaddle.dy = paddleSpeed;
-  } 
+  }
 });
-  
+ 
 // listen to keyboard events to stop the paddle if key is released
 document.addEventListener('keyup', function(e) {
   if (e.which === 38 || e.which === 40) {
     rightPaddle.dy = 0;
   }
-  
+ 
 });
+
 
 // start the game
 requestAnimationFrame(loop);
