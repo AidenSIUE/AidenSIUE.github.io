@@ -8,6 +8,12 @@ var paddleSpeed = 5;
 var ballSpeed = 6;
 var currentVolley = 0;
 
+// variables to be used for random serve angle
+let rangemax = 3.8;
+let rangemin = 0.2;
+let randangle = 2;
+let randserveside = 1;
+
 const leftPaddle = {
   // start in the middle of the game on the left side
   x: grid * 2,
@@ -143,12 +149,25 @@ function loop() {
       document.getElementById('longestVolley').innerHTML = currentVolley;
     }
 
+    // generate random number to be used to send ball at random angle from the serve
+    randangle = Math.random() * (rangemax - rangemin) + rangemin;
+
     // give some time for the player to recover before launching the ball again
     setTimeout(() => {
       ball.resetting = false;
       ball.x = canvas.width / 2;
-      ball.y = canvas.height / 2;
-    }, 400);
+      ball.y = canvas.height / randangle; // the height at which the ball starts from is randomized
+
+      // randomly change which side the ball is served toward
+      randserveside = Math.floor(Math.random() * 2); // generates either 0 or 1
+      if (randserveside == 0) {
+        ball.dx *= -1; // switch direction ball is heading (serve to winning side)
+      }
+      else if (randserveside == 1) {
+        ball.dx *= 1; // let ball keep going in same direction (serve to losing side)
+      }  
+
+    }, 900);
     
     currentVolley = 0;
   }
