@@ -11,6 +11,13 @@ var currentVolley = 0;
 var userAction = false;
 var audio = new Audio('pong.mp3');
 
+// For frame timing (fixing speed)
+const fps = 160;
+
+// For showing side that lost
+var isLeftLoser;
+var isRealScore = 0;
+
 // variables to be used for random serve angle
 let rangemax = 3.8;
 let rangemin = 0.2;
@@ -68,10 +75,10 @@ function collides(obj1, obj2) {
 function move(){
 // cpu paddle will move slower, so he's not unbeatable
   if(ball.y > leftPaddle.y){
-    leftPaddle.dy = paddleSpeed*.75;
+    leftPaddle.dy = paddleSpeed*.80;
   }
   else if(ball.y < leftPaddle.y){
-    leftPaddle.dy = -(paddleSpeed*.75);
+    leftPaddle.dy = -(paddleSpeed*.80);
   }
 }
  function endGame(){
@@ -105,9 +112,22 @@ function playSound(){
   }
 }
 
+// Draws red box on losing player's side
+function drawPlayerLost(isLeftLoser) {
+  boxStartX = leftPaddle.x + (2 * grid) + (isLeftLoser * (grid * 22 + grid * 1/2));
+  boxStartY = grid * 2;
+  boxWidth = canvas.width / 2 - leftPaddle.x - (3 * grid);
+  boxHeight = canvas.height - (4 * grid);
+  context.fillStyle = "rgba(255, 16, 16, 0.6)";
+  context.fillRect(boxStartX, boxStartY, boxWidth, boxHeight);
+}
+
 // game loop
 function loop() {
-  requestAnimationFrame(loop);
+  // Timeout used to limit game speed based on fps
+  setTimeout(() => {
+    requestAnimationFrame(loop);
+  }, 1000 / fps);
   context.clearRect(0,0,canvas.width,canvas.height);
   if(document.getElementById('score2').innerHTML == 7 ||
      document.getElementById('score1').innerHTML == 7){
@@ -163,13 +183,22 @@ function loop() {
     playSound();
   }
 
+  if (ball.resetting && isRealScore) drawPlayerLost(isLeftLoser);
+
   // reset ball if it goes past paddle (but only if we haven't already done so)
   if ( (ball.x < 0 || ball.x > canvas.width) && !ball.resetting) {
     ball.resetting = true;
+    if (currentVolley > 0) isRealScore = 1;
     if(ball.x < 0 && currentVolley > 0)
+    {
+      isLeftLoser = 0;
       document.getElementById('score2').innerHTML = parseInt(document.getElementById('score2').innerHTML) + 1;
+    }
     else if(ball.x > canvas.width && currentVolley > 0)
+    {
+      isLeftLoser = 1;
       document.getElementById('score1').innerHTML = parseInt(document.getElementById('score1').innerHTML) + 1;
+    }
 
     let longestVolley = parseInt(document.getElementById('longestVolley').innerHTML);
      
@@ -186,6 +215,7 @@ function loop() {
       ball.x = canvas.width / 2;
       ball.y = canvas.height / randangle; // the height at which the ball starts from is randomized
 
+      isRealScore = 0;
 
       // randomly change which side the ball is served toward
       randserveside = Math.floor(Math.random() * 2); // generates either 0 or 1
@@ -282,4 +312,4 @@ document.addEventListener('keyup', function(e) {
 
 
 // start the game
-requestAnimationFrame(loop);
+frameRequest = requestAnimationFrame(loop);
