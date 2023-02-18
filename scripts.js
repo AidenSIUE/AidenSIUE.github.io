@@ -312,4 +312,4 @@ document.addEventListener('keyup', function(e) {
 
 
 // start the game
-frameRequest = requestAnimationFrame(loop);
+requestAnimationFrame(loop);
